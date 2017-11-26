@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { HashRouter, Switch, Route } from 'react-router-dom'
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 
 import { Card } from 'material-ui/Card';
@@ -18,13 +19,20 @@ class App extends Component {
 
   render() {
     return (
-      <MuiThemeProvider>
-        <Card>
-          <AppBar title="Moje nejvetší přání" />
-          <Users users={USERS} />
-          <WishList />
-        </Card>
-      </MuiThemeProvider>
+      <HashRouter>
+        <MuiThemeProvider>
+          <Card>
+            <AppBar title="Moje nejvetší přání" />
+            <Switch>
+              <Route path="/" exact render={() => <Users users={USERS} />} />
+              <Route path="/:userId" render={(props) => {
+                const user = USERS.find(u => u.id === parseInt(props.match.params.userId))
+                return <WishList user={user} />;
+              }}/>
+            </Switch>
+          </Card>
+        </MuiThemeProvider>
+      </HashRouter>
     );
   }
 }

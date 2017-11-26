@@ -16,10 +16,17 @@ import Wish from './Wish';
 
 const ENTER_KEY_CODE = 13
 
-
 export class WishList extends Component {
 
   socket;
+
+  get myWishes() {
+    return this.wishes.filter(w => w.createdBy.id === this.props.user.id)
+  }
+
+  get otherWhishes() {
+    return this.wishes.filter(w => w.createdBy.id !== this.props.user.id)
+  }
 
   constructor(props) {
     super(props);
@@ -28,8 +35,6 @@ export class WishList extends Component {
       currentWish: ''
     });
 
-    this.name = 'Jindra';
-    this.myWishes = observable.array([]);
     this.wishes = observable.array([]);
   }
 
@@ -64,18 +69,18 @@ export class WishList extends Component {
   }
 
   handleSelectWish = (selected, wish) => {
-    wish.selected = selected;
+    wish.selectedBy = selected ? this.props.user : null;
     this.socket.emit('WISH_UPDATED', wish);
   }
 
   handleSubmit = (e) => {
     const wish = {
-      name: this.name,
+      createdBy: this.props.user,
       wish: this.form.currentWish,
     }
 
     this.socket.emit('WISH_ADDED', wish);
-    this.myWishes.push(wish);
+    this.wishes.push(wish);
 
     this.form.currentWish = '';
   }
@@ -83,10 +88,12 @@ export class WishList extends Component {
   render() {
     return (
       <List>
-        {this.wishes.map(props => <Wish {...props} showCheckbox onSelect={this.handleSelectWish} />)}
+        {this.otherWhishes.map((wish, key) => <Wish {...wish} showCheckbox onSelect={this.handleSelectWish} key={`other-${key}`} />)}
         <Divider />
-        <Subheader>Moje přání</Subheader>
-        {this.myWishes.map(props => <Wish {...props} />)}
+
+        <Subheader>{`Moje přání ${this.props.user.name}`}</Subheader>
+        {this.myWishes.map((wish, key) => <Wish {...wish} key={`my-${key}`} />)}
+
         <TextField hintText="Copak si přeješ? :)"
           value={this.form.currentWish}
           onKeyUp={this.handleKeyUp}
