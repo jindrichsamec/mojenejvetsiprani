@@ -39,7 +39,7 @@ export class WishList extends Component {
   }
 
   componentDidMount() {
-    this.socket = socketIo('//localhost:5000')
+    this.socket = socketIo(process.env.REACT_APP_SOCKET_IO_HOST)
     this.socket.on('WISH_LIST', (data) => {
       this.wishes.replace(data);
     });
