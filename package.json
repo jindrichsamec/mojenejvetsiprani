@@ -3,15 +3,18 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "koa": "^2.4.1",
     "material-ui": "^0.19.4",
     "mobx": "^3.3.1",
     "mobx-react": "^4.3.4",
     "react": "^16.1.1",
     "react-dom": "^16.1.1",
-    "react-scripts": "1.0.17"
+    "react-scripts": "1.0.17",
+    "socket.io": "^2.0.4"
   },
   "scripts": {
-    "start": "react-scripts start",
+    "serve": "node server/index.js",
+    "start": "react-scripts start & npm server",
     "build": "react-scripts build",
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject"
