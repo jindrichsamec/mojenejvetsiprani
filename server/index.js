@@ -1,24 +1,31 @@
 const io = require('socket.io')();
+const redis = require('./redis')();
 
-const wishes = []
+const WISH_REDIS_KEY = 'wishes:list'
 
-function onWishAdded(data) {
-  wishes.push(data)
+async function onWishAdded(data) {
+  await redis.hset(WISH_REDIS_KEY, data.id, JSON.stringify(data));
 }
 
-function onWishRemoved(data) {
-  const index = wishes.findIndex(((w) => w.name === data.name))
-  wishes.splice(index, 1);
+async function onWishRemoved(data) {
+  await redis.hdel(WISH_REDIS_KEY, data.id);
 }
 
-function onWishUpdated(data) {
-  const index = wishes.findIndex(((w) => w.name === data.name))
-  wishes[index] = data;
+async function onWishUpdated(data) {
+  const wishExists = await redis.hexists(WISH_REDIS_KEY, data.id);
+  if (wishExists) {
+    await redis.hset(WISH_REDIS_KEY, data.id, JSON.stringify(data));
+  }
+}
+
+async function getWishList() {
+  const serialized = await redis.hvals(WISH_REDIS_KEY)
+  return serialized.map(s => JSON.parse(s))
 }
 
 io.on('connection', socket => {
 
-  socket.emit('WISH_LIST', wishes)
+  getWishList().then((wishes) => socket.emit('WISH_LIST', wishes));
 
   const actions = [
     { event: 'WISH_ADDED', handler: onWishAdded },
@@ -27,8 +34,11 @@ io.on('connection', socket => {
   ]
   actions.map(action => {
     socket.on(action.event, (data) => {
-      action.handler(data)
-      socket.broadcast.emit(action.event, data);
+      console.info('=> incoming', action.event, data)
+      action.handler(data).then(() => {
+        console.info('<= outgoing', action.event, data)
+        socket.broadcast.emit(action.event, data);
+      })
     })
   })
 

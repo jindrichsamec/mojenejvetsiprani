@@ -8,7 +8,7 @@ import { List } from 'material-ui/List';
 
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
-
+import uuid from 'uuid/v4';
 
 import socketIo from 'socket.io-client';
 
@@ -53,7 +53,7 @@ export class WishList extends Component {
     })
 
     this.socket.on('WISH_UPDATED', (data) => {
-      const index = this.wishes.findIndex(w => w.wish === data.wish)
+      const index = this.wishes.findIndex(w => w.id === data.id)
       this.wishes[index] = data
     })
   }
@@ -75,8 +75,10 @@ export class WishList extends Component {
 
   handleSubmit = (e) => {
     const wish = {
+      id: uuid(),
+      selectedBy: null,
       createdBy: this.props.user,
-      wish: this.form.currentWish,
+      title: this.form.currentWish,
     }
 
     this.socket.emit('WISH_ADDED', wish);
@@ -88,11 +90,11 @@ export class WishList extends Component {
   render() {
     return (
       <List>
-        {this.otherWhishes.map((wish, key) => <Wish {...wish} showCheckbox onSelect={this.handleSelectWish} key={`other-${key}`} />)}
+        {this.otherWhishes.map((wish, key) => <Wish wish={wish} showCheckbox onSelect={this.handleSelectWish} key={`other-${key}`} />)}
         <Divider />
 
         <Subheader>{`Moje přání ${this.props.user.name}`}</Subheader>
-        {this.myWishes.map((wish, key) => <Wish {...wish} key={`my-${key}`} />)}
+        {this.myWishes.map((wish, key) => <Wish wish={wish} key={`my-${key}`} />)}
 
         <TextField hintText="Copak si přeješ? :)"
           value={this.form.currentWish}
