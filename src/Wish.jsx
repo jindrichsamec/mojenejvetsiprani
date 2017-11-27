@@ -3,6 +3,7 @@ import { observer } from 'mobx-react';
 import { observable } from 'mobx';
 import { ListItem } from 'material-ui/List';
 import Checkbox from 'material-ui/Checkbox';
+import StarIcon from 'material-ui/svg-icons/action/grade';
 
 export class Wish extends Component {
 
@@ -11,13 +12,13 @@ export class Wish extends Component {
   })
 
   componentWillMount() {
-    const { wish, currentUser } = this.props;
-    this._state.checked = this.isChecked(wish, currentUser);
+    const { wish } = this.props;
+    this._state.checked = this.isSelected(wish)
   }
 
   componentDidUpdate(props, nextProps) {
-    const { wish, currentUser } = this.props;
-    this._state.checked = this.isChecked(wish, currentUser);
+    const { wish } = this.props;
+    this._state.checked = this.isSelected(wish)
   }
 
   handleCheck = (e, isInputChecked) => {
@@ -38,23 +39,20 @@ export class Wish extends Component {
   }
 
   isDisabled = (wish, user) => {
-    return this.isItForCurrentUser(wish, user)
-    || (this.isSelected(wish) && !this.isSelectedByCurrentUser(wish, user))
-  }
-
-  isChecked = (wish, user) => {
-    return this.isSelected(wish) && !this.isItForCurrentUser(wish, user)
+    return (this.isSelected(wish) && !this.isSelectedByCurrentUser(wish, user))
   }
 
   render() {
     const { wish, currentUser } = this.props;
-    const props = {
-      primaryText:  wish.title,
-      secondaryText: `Přeje si ${wish.createdBy.name}`,
-      leftCheckbox: <Checkbox
-      disabled={this.isDisabled(wish, currentUser)}
-      checked={this._state.checked}
-      onCheck={this.handleCheck}/>
+    const props = {primaryText:  wish.title}
+
+    if (!this.isItForCurrentUser(wish, currentUser)) {
+      props['leftCheckbox'] = <Checkbox
+        disabled={this.isDisabled(wish, currentUser)}
+        checked={this._state.checked}
+        onCheck={this.handleCheck}/>
+    } else {
+      props['leftIcon'] = <StarIcon />
     }
 
     return (

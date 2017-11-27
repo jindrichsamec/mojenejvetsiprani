@@ -4,7 +4,7 @@ import Subheader from 'material-ui/Subheader';
 import Divider from 'material-ui/Divider';
 import TextField from 'material-ui/TextField';
 import RaisedButton from 'material-ui/RaisedButton';
-import { List } from 'material-ui/List';
+import { List, ListItem } from 'material-ui/List';
 
 import { observable } from 'mobx';
 import { observer } from 'mobx-react';
@@ -19,6 +19,8 @@ const ENTER_KEY_CODE = 13
 export class WishList extends Component {
 
   socket;
+
+  input;
 
   get myWishes() {
     return this.wishes.filter(w => w.createdBy.id === this.props.currentUser.id)
@@ -46,7 +48,7 @@ export class WishList extends Component {
     });
 
     this.socket.on('WISH_ADDED', (data) =>  {
-      this.wishes.push(data);
+      this.wishes.unshift(data);
     });
 
     this.socket.on('WISH_REMOVED', (data) => {
@@ -57,6 +59,7 @@ export class WishList extends Component {
       const index = this.wishes.findIndex(w => w.id === data.id)
       this.wishes[index] = data
     })
+    this.input.focus();
   }
 
   handleKeyUp = (e) => {
@@ -79,12 +82,12 @@ export class WishList extends Component {
     const wish = {
       id: uuid(),
       selectedBy: null,
-      createdBy: this.props.user,
+      createdBy: this.props.currentUser,
       title: this.form.currentWish,
     }
 
     this.socket.emit('WISH_ADDED', wish);
-    this.wishes.push(wish);
+    this.wishes.unshift(wish);
 
     this.form.currentWish = '';
   }
@@ -93,26 +96,36 @@ export class WishList extends Component {
     return this.otherWhishes.filter(wish => wish.createdBy.id === user.id)
   }
 
+  renderListForUser(user, currentUser) {
+    if (currentUser.id === user.id) {
+      return null;
+    }
+    return (
+      <div>
+        <Divider />
+        <Subheader>{`Co si přeje ${user.name}`}</Subheader>
+        {this.getWishesFor(user).map((wish, key) => <Wish wish={wish} currentUser={currentUser} onSelect={this.handleSelectWish} key={`other-${key}`} />)}
+      </div>
+    );
+  }
+
   render() {
     const { currentUser, users } = this.props;
 
     return (
       <List>
-        {users.map(user => {
-          return this.getWishesFor(user).map((wish, key) => {
-            return <Wish wish={wish} currentUser={currentUser} onSelect={this.handleSelectWish} key={`other-${key}`} />
-          })
-        })}
-        <Divider />
+      <Subheader>{`Moje přání`}</Subheader>
+        <ListItem>
 
-        <Subheader>{`Moje přání ${currentUser.name}`}</Subheader>
+          <TextField hintText="Copak si přeješ? :)"
+            value={this.form.currentWish}
+            ref={input => this.input = input}
+            onKeyUp={this.handleKeyUp}
+            onChange={this.handleChange} />
+          <RaisedButton label="+" primary onClick={this.handleSubmit} />
+        </ListItem>
         {this.myWishes.map((wish, key) => <Wish wish={wish} key={`my-${key}`} currentUser={currentUser} />)}
-
-        <TextField hintText="Copak si přeješ? :)"
-          value={this.form.currentWish}
-          onKeyUp={this.handleKeyUp}
-          onChange={this.handleChange} />
-        <RaisedButton label="Přidat" primary onClick={this.handleSubmit} />
+        {users.map(user => this.renderListForUser(user, currentUser))}
       </List>
     )
   }
