@@ -21,11 +21,12 @@ export class WishList extends Component {
   socket;
 
   get myWishes() {
-    return this.wishes.filter(w => w.createdBy.id === this.props.user.id)
+    return this.wishes.filter(w => w.createdBy.id === this.props.currentUser.id)
   }
 
+
   get otherWhishes() {
-    return this.wishes.filter(w => w.createdBy.id !== this.props.user.id)
+    return this.wishes.filter(w => w.createdBy.id !== this.props.currentUser.id)
   }
 
   constructor(props) {
@@ -69,8 +70,9 @@ export class WishList extends Component {
   }
 
   handleSelectWish = (selected, wish) => {
-    wish.selectedBy = selected ? this.props.user : null;
-    this.socket.emit('WISH_UPDATED', wish);
+    const index = this.wishes.findIndex(w => w.id === wish.id)
+    this.wishes[index].selectedBy = selected ? this.props.currentUser : null;
+    this.socket.emit('WISH_UPDATED', this.wishes[index]);
   }
 
   handleSubmit = (e) => {
@@ -87,14 +89,24 @@ export class WishList extends Component {
     this.form.currentWish = '';
   }
 
+  getWishesFor = (user) => {
+    return this.otherWhishes.filter(wish => wish.createdBy.id === user.id)
+  }
+
   render() {
+    const { currentUser, users } = this.props;
+
     return (
       <List>
-        {this.otherWhishes.map((wish, key) => <Wish wish={wish} showCheckbox onSelect={this.handleSelectWish} key={`other-${key}`} />)}
+        {users.map(user => {
+          return this.getWishesFor(user).map((wish, key) => {
+            return <Wish wish={wish} currentUser={currentUser} onSelect={this.handleSelectWish} key={`other-${key}`} />
+          })
+        })}
         <Divider />
 
-        <Subheader>{`Moje přání ${this.props.user.name}`}</Subheader>
-        {this.myWishes.map((wish, key) => <Wish wish={wish} key={`my-${key}`} />)}
+        <Subheader>{`Moje přání ${currentUser.name}`}</Subheader>
+        {this.myWishes.map((wish, key) => <Wish wish={wish} key={`my-${key}`} currentUser={currentUser} />)}
 
         <TextField hintText="Copak si přeješ? :)"
           value={this.form.currentWish}

@@ -27,7 +27,7 @@ class App extends Component {
               <Route path="/" exact render={() => <Users users={USERS} />} />
               <Route path="/:userId" render={(props) => {
                 const user = USERS.find(u => u.id === parseInt(props.match.params.userId, 10))
-                return <WishList user={user} />;
+                return <WishList currentUser={user} users={USERS} />;
               }}/>
             </Switch>
           </Card>
