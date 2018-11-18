@@ -1,5 +1,10 @@
-const io = require('socket.io')();
+const http = require('http')
+const serve = require('koa-static')
+const Koa = require('koa')
+const Io = require('socket.io');
 const redis = require('./redis')();
+
+const koaServer = new Koa()
 
 const WISH_REDIS_KEY = 'wishes:list'
 
@@ -23,7 +28,12 @@ async function getWishList() {
   return serialized.map(s => JSON.parse(s))
 }
 
-io.on('connection', socket => {
+koaServer.use(serve('build'))
+const httpServer = http.createServer(koaServer.callback())
+socketServer = Io(httpServer)
+
+
+socketServer.on('connection', socket => {
 
   getWishList().then((wishes) => socket.emit('WISH_LIST', wishes));
 
@@ -41,9 +51,9 @@ io.on('connection', socket => {
       })
     })
   })
-
 })
 
+
 const PORT = process.env.PORT || 5000;
-io.listen(PORT);
+httpServer.listen(PORT)
 console.log(`listening on port ${PORT}...`)
